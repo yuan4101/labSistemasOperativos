@@ -1,5 +1,5 @@
 # Laboratorio 2 - Busqueda de archivos
-## Elaborado por: Juanantec - Delatorre
+### Elaborado por: Juanantec - Delatorre
 
 - Planteamiento del problema<br>
 Deberá desarrollar un programa que, mediante llamada a los servicios del sistema
