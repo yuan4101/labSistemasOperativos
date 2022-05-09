@@ -1,1 +1,0 @@
-# Laboratorio de sistemas operativos
