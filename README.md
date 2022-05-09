@@ -1,1 +1,1 @@
-# Sistemas Operatios
+# Laboratorio de sistemas operativos
