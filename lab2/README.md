@@ -1,5 +1,5 @@
 # Laboratorio 2 - Busqueda de archivos
-### Elaborado por: Juan Manuel Ante (juanantec) - Darwin Estiben Latorre (delatorre)
+### Elaborado por: Juan Manuel Ante (juanantec@unicauca.edu.co) - Darwin Estiben Latorre (delatorre@unicauca.edu.co)
 
 - Planteamiento del problema<br>
 Deberá desarrollar un programa que, mediante llamada a los servicios del sistema
