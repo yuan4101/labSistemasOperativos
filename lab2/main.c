@@ -45,6 +45,13 @@ int buscar(char *directorio, char *patron){
     struct dirent *ent;
     DIR *dir = opendir(directorio);
 
+    if (dir == NULL)
+    {
+        perror("opendir");
+        return total;
+    }
+    
+
     while ((ent = readdir(dir)) != NULL){
         strcpy(ruta, directorio);
         strcat(ruta, "/");
