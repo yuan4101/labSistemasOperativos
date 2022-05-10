@@ -51,7 +51,6 @@ int buscar(char *directorio, char *patron){
         return total;
     }
     
-
     while ((ent = readdir(dir)) != NULL){
         strcpy(ruta, directorio);
         strcat(ruta, "/");
