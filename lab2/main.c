@@ -26,8 +26,8 @@ int esDirectorio(char *ruta){
     struct stat buf;
 
     if (stat(ruta, &buf) < 0){
-        printf("Corrupted at: '%s'\n", ruta);
-        perror("stat");
+        // Los archivos corruptos generan una excepcion de stat, se opta por comentar la siguiente linea
+        //perror("stat");
         return 0;
     }
 
@@ -41,7 +41,7 @@ int esDirectorio(char *ruta){
 
 int buscar(char *directorio, char *patron){
     int total = 0;
-    char * ruta = (char*) malloc(200 * sizeof(char));
+    char * ruta = (char*) malloc(300 * sizeof(char));
     struct dirent *ent;
     DIR *dir = opendir(directorio);
 
