@@ -7,9 +7,6 @@ int esDirectorio (char[]);
 int main(int argc, char *argv[]){
     /* Codigo main de prueba    
     printf("Busqueda de archivos\n");
-    esDirectorio("/home/juanantec/Documentos/nota.txt");
-    exit(EXIT_SUCCESS);
-    */
 
 
 }
