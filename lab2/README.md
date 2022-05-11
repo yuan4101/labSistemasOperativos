@@ -1,6 +1,9 @@
 # Laboratorio 2 - Busqueda de archivos
 ### Elaborado por:<br>Juan Manuel Ante (juanantec@unicauca.edu.co)<br>Darwin Estiben Latorre (delatorre@unicauca.edu.co)
 
+- Link GitHub:<br>
+- (`https://github.com/yuan4101/labSistemasOperativos`)
+
 - Planteamiento del problema<br>
 Deberá desarrollar un programa que, mediante llamada a los servicios del sistema
 y las funciones de la biblioteca estándar de C, permita buscar un archivo (o
