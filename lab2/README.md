@@ -1,8 +1,7 @@
 # Laboratorio 2 - Busqueda de archivos
 ### Elaborado por:<br>Juan Manuel Ante (juanantec@unicauca.edu.co)<br>Darwin Estiben Latorre (delatorre@unicauca.edu.co)
 
-- Link GitHub:<br>
-- (`https://github.com/yuan4101/labSistemasOperativos`)
+- Link GitHub: (`https://github.com/yuan4101/labSistemasOperativos/tree/main/lab2`)
 
 - Planteamiento del problema<br>
 Deberá desarrollar un programa que, mediante llamada a los servicios del sistema
