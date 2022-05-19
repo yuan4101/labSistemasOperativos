@@ -1,8 +1,7 @@
 # Primer parcial - Sistema de Control de Versiones
 ### Elaborado por:<br>Juan Manuel Ante (juanantec@unicauca.edu.co)<br>Darwin Estiben Latorre (delatorre@unicauca.edu.co)
 
-- Link GitHub:<br>
-- (`https://github.com/yuan4101/labSistemasOperativos`)
+- Link GitHub: (`(https://github.com/yuan4101/labSistemasOperativos/tree/main/parcial_1_delatorrre_juanantec)`)
 
 Los Sistemas de Control de Versiones (VCS) permiten guardar el rastro de las modificaciones sobre determinados elementos.
 En el contexto de este examen, se gestionarán versiones de archivos y directorios.
