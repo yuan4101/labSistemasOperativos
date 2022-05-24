@@ -10,7 +10,7 @@ Se deberá implementar un sistema de control de versiones simple, que permita:
 - Adicionar un archivo al repositorio de versiones.
 - Listar las versiones de un archivo en el repositorio de versiones.
 - Obtener la versión de un archivo del repositorio de versiones. <br>
-- 
+
 En esta implementación sólo se deberá realizar el control de versiones por directorio,
 en el cual sólo se pueden agregar archivos que se encuentren en el directorio actual. <br>
 
