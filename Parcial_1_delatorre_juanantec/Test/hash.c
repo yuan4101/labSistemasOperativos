@@ -4,7 +4,7 @@
 /**
  * @brief 
  * @param filename nombre del archivo de entrada 
- * @return hash del archivo, NILL si ocurre un error
+ * @return hash del archivo, NULL si ocurre un error
  */
 char * hash(char * filename);
 

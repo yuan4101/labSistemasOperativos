@@ -31,19 +31,19 @@ int main(int argc, char * argv[])
 
 int crear_directorio_versiones()
 {
-    struct stat s;
+    struct stat varStat;
 
     //Verifica si el directorio existe
-    if(stat(VERSIONS_DIR, &s) == 0)
+    if(stat(VERSIONS_DIR, &varStat) == 0)
     {
-        if (S_ISDIR(s.st_mode))
+        if (S_ISDIR(varStat.st_mode))
             return 1;
         else
             return 0;
     }
 
     //Verifica si se puede crear el directorio
-    if(stat(VERSIONS_DIR, &s) != 0)
+    if(stat(VERSIONS_DIR, &varStat) != 0)
     {
         if (mkdir(VERSIONS_DIR, 0755) != 0)
         {

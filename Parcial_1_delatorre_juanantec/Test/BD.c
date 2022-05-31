@@ -14,17 +14,21 @@ typedef struct{
     char varComment[BUFSIZ];
     char varHash[65];
 }file_version;
-/*
-*@brieft Fuarda una nueva version en la base de datos
-*@param v Version a guardar
-*@return 1 en caso de exito, 0 si  ocurre un error
-*/
+
+/**
+ * @brief
+ * Guarda una nueva version en la base de datos
+ * @param v Version a guardar
+ * @return 1 en caso de exito, 0 si ocurre un error
+ */
 int save(file_version *v);
-/*
-*@brieft Fuarda una nueva version en la base de datos
-*@param v Version a guardar
-*@return 1 en caso de exito, 0 si  ocurre un error
-*/
+
+/**
+ * @brief 
+ * Guarda una nueva version en la base de datos
+ * @param v Version a guardar
+ * @return 1 en caso de exito, 0 si ocurre un error
+ */
 int save2(file_version *v);
 
 #define VERSIONS_FILE "test_versions.dv"
@@ -33,10 +37,10 @@ int main (int argc, char * argv[]){
 
     file_version v;
 
-    memset(&v, 0, sizeof(file_version)); //Limpiar espacion de memoria en la pila
+    memset(&v, 0, sizeof(file_version)); //Limpiar espacio de memoria en la pila
     strcpy(v.varFilename, "hello.c");
     strcpy(v.varComment, "Primera version");
-    strcpy(v.varHash, "jwei23293r4nfu49d9dnx0x0c00v00c042349234283cc3929492939423c33423");
+    strcpy(v.varHash, "jwei23293r4nfu49d9dnx0x0c00v00c042349234283cc3929492939423c33423"); //(Ejemplo) Convertir un archivo a hash como el segundo parametro
 
     if (!save(&v))
     {
@@ -48,11 +52,12 @@ int main (int argc, char * argv[]){
 }
 
 int save(file_version *v){
+
     //Abrir la base de datos
     int fd;
     ssize_t nbytes;
     
-    fd = open(VERSIONS_FILE, //ARHCIVO
+    fd = open(VERSIONS_FILE, //ARCHIVO
     O_CREAT | O_WRONLY | O_APPEND, //FLAGS
     S_IRWXG | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH //MODO
     );
@@ -97,7 +102,7 @@ int save2(file_version *v){
 
     nmemb = fwrite(
         v, //Referencia a memoria (Buffer)
-        sizeof(file_version), //Tamano de la memoria de lo que se va a escribir
+        sizeof(file_version), //Tamaño de la memoria de lo que se va a escribir
         1,
         fp
         );
