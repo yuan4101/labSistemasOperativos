@@ -15,6 +15,7 @@ typedef struct strRegistroArchivo{
 }strRegistroArchivo;
 
 void list(char *);
+int buscar(char *);
 void get(char *, int);
 int add(char *, char *);
 char * obtenerHash(char *);
@@ -51,7 +52,7 @@ int main(int argc, char * argv[])
 /**
  * @brief 
  * Crear el directorio de versiones 
- * @return 1 si el directorio existe y/o se puede crear
+ * @return 1 si el directorio existe y/o se puede crear 0 en caso contrario
  */
 int crearDirectorioVersiones()
 {
@@ -73,14 +74,20 @@ int crearDirectorioVersiones()
             return 0;
         }    
         else
-            return 1;
+		{
+			FILE * varDBFilePointer;
+			varDBFilePointer = fopen(".versions/versions.db", "a");
+			fclose(varDBFilePointer);
+			return 1;
+		}
+            
 }
 
 /**
- * @brief Calcula el hash de un archivo con sha256
- *
+ * @brief
+ * Calcula el hash de un archivo con sha256
  * @param prmNombreArchivo  Nombre del archivo de entrada
- * @return hash del archivo, NULL si ocurre un error
+ * @return Hash del archivo, NULL si ocurre un error
  */
 char * obtenerHash(char * prmNombreArchivo)
 {
@@ -122,15 +129,14 @@ char * obtenerHash(char * prmNombreArchivo)
 }
 
 /**
- * @brief abre el archivo original y copia su contenido al nuevo archivo.
- *
- * @param prmFuente archivo fuente
- * @param prmDestino archivo destino
+ * @brief
+ * Abre el archivo original y copia su contenido al nuevo archivo.
+ * @param prmFuente Archivo fuente
+ * @param prmDestino Archivo destino
  * @return 1 si no ocurrio ningun error y 0 si ocurrio un error
  */
 int copiarArchivo(char * prmFuente, char * prmDestino)
 {
-	int varFlag;
 	char varChar;
 	FILE * varFilePointer, * varDestinyFilePointer;
 	
@@ -139,8 +145,7 @@ int copiarArchivo(char * prmFuente, char * prmDestino)
 	if (varFilePointer == NULL)
 	{
 		fprintf(stderr, "No se pudo abrir el archivo fuente %s \n", prmFuente);
-		varFlag = 0;
-		return varFlag;
+		return 0;
 	}
 
 	varDestinyFilePointer = fopen(prmDestino, "w+");
@@ -148,8 +153,7 @@ int copiarArchivo(char * prmFuente, char * prmDestino)
 	if (varDestinyFilePointer == NULL)
 	{
 		fprintf(stderr, "No se pudo abrir el archivo destino %s \n", prmDestino);
-		varFlag = 0;
-		return varFlag;
+		return 0;
 	}
 	
 	varChar = fgetc(varFilePointer);
@@ -160,17 +164,16 @@ int copiarArchivo(char * prmFuente, char * prmDestino)
         varChar = fgetc(varFilePointer);
 	}
 	
-	varFlag = 1;
 	fclose(varFilePointer);
 	fclose(varDestinyFilePointer);
 
-	return varFlag;
+	return 1;
 }
 
 /**
- * @brief adiciona un nuevo registro al archivo "versions.db".
- * 
- * @param prmRegistroArchivo estructura de tipo strRegistroArchivo
+ * @brief 
+ * Agrega un nuevo registro al archivo "versions.db".
+ * @param prmRegistroArchivo La estructura del registro
  */
 void adicionarVersion(strRegistroArchivo prmRegistroArchivo)
 {
@@ -188,11 +191,11 @@ void adicionarVersion(strRegistroArchivo prmRegistroArchivo)
 }
 
 /**
- * @brief Adiciona un archivo al repositorio con un comentario
- * 
- * @param prmArchivo es el archivo creado previamente
- * @param prmComentario una cadena de caracteres asociada al archivo
- * @return Retorna 1 si el archivo fue adicionado correctamente, 0 en caso contrario
+ * @brief 
+ * Agrega un archivo al repositorio con un comentario
+ * @param prmArchivo Archivo a agregar
+ * @param prmComentario Cadena de caracteres asociada al archivo
+ * @return Retorna 1 si el archivo fue agregado correctamente, 0 en caso contrario
  */
 int add(char * prmArchivo, char * prmComentario)
 {
@@ -205,17 +208,20 @@ int add(char * prmArchivo, char * prmComentario)
 	if (stat(prmArchivo, &varStat) < 0 )
 	{
 		fprintf(stderr, "El archivo no existe\n");
-		return varFlag;
+		return 0;
 	}
 
 	if (!S_ISREG(varStat.st_mode))
 	{
 		fprintf(stderr, "No es un archivo normal\n");
-		return varFlag;
+		return 0;
 	}
 
 	varHash = obtenerHash(prmArchivo);
 
+	if (buscar(varHash) == 1)
+		return 0;
+	
 	strcat(strcpy(varNuevo, ".versions/"), varHash);
 
 	if (copiarArchivo(prmArchivo, varNuevo) == 1)
@@ -235,10 +241,10 @@ int add(char * prmArchivo, char * prmComentario)
 }
 
 /**
- * @brief Obtiene una versión solicitada (numero secuencial) de un archivo
- * 
- * @param nombre_archivo nombre del archivo a reponer
- * @param version numero de la version a reponer
+ * @brief 
+ * Obtiene una versión solicitada (numero secuencial) de un archivo
+ * @param prmNombreArchivo Nombre del archivo a obtener
+ * @param prmVersion Numero de la version a obtener
  */
 void get(char * prmNombreArchivo, int prmVersion)
 {
@@ -275,9 +281,9 @@ void get(char * prmNombreArchivo, int prmVersion)
 }
 
 /**
- * @brief imprime la información que se encuentra dentro del archivo versions.db del sub-directorio correspondiente para el archivo.
-* 
- * @param prmNombreArchivo nombre del archivo a listar
+ * @brief 
+ * Imprime la información que se encuentra dentro del archivo versions.db del sub-directorio VERSIONS_DIR
+ * @param prmNombreArchivo Nombre del archivo a listar
  */
 void list(char * prmNombreArchivo)
 {
@@ -306,4 +312,40 @@ void list(char * prmNombreArchivo)
 	}
 
 	fclose(varFilePointer);
+}
+
+/**
+ * @brief 
+ * Busca un hash en VERSIONS_DB
+ * @param prmHash El hash a buscar
+ * @return Retorna 1 si encuentra coincidencia, 0 si no encuentra coincidencia
+ */
+int buscar(char * prmHash)
+{
+	FILE * varFilePointer;
+	struct strRegistroArchivo varRegistroArchivo;
+	
+	varFilePointer = fopen(".versions/versions.db", "r");
+
+	if( varFilePointer == NULL)
+	{
+		fprintf(stderr, "No se pudo abrir el archivo versions.db\n");
+		exit(0);
+	}
+
+	while (!feof(varFilePointer))
+	{
+		if (fread(&varRegistroArchivo, sizeof(strRegistroArchivo), 1, varFilePointer) != 1)
+			break;
+
+		if (strcmp(varRegistroArchivo.atrHash, prmHash) == 0)
+		{
+			fclose(varFilePointer);
+			return 1;
+		}
+	}
+
+	fclose(varFilePointer);
+
+	return 0;
 }
