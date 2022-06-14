@@ -8,44 +8,43 @@
 
 int main(int argc, char * argv[]) {
 	pid_t varPid;
-	int flagWaitStatus;
-	int flagFinished;
 	split_list * varList;
-
+	int flagWaitStatus;
 	char varLinea[BUFSIZ];
-	/*
-	split_list * list;
-	int i;
 
-	list = split(" hola mundo esta es una cadena     adios", " \t\n|");
-
-	for (i= 0; i< list->count; i++) {
-		printf("#%s# ", list->parts[i]);
-	}
-	*/
-
-	flagFinished = 0;
-
-	varList = split(varLinea, " \t\n|");
+	int flagFinished = 0;
 
 	while (!flagFinished)
 	{
-		memset(varLinea, 0, BUFSIZ)
-
+		memset(varLinea, 0, BUFSIZ);
+		printf("$ ");
 		fgets(varLinea, BUFSIZ, stdin);
-	}
-	
+		varList = split(varLinea, " \t\n|");
 
-	varPid = fork();
+		if (varList->count == 0) {
+			continue;
+		}
+		
+		if (varList->parts[0][0] == '#') {
+			continue;
+		}
 
-	if (varPid != 0)
-	{
-		waitpid(varPid, &flagWaitStatus, 0);
-	} else {
-		//int varResultado;
-		execvp(varList-> parts[0], varlist->parts);
-		perror("exec");
-		exit(EXIT_FAILURE);
+		if (strcmp(varList->parts[0], "exit") == 0
+			|| strcmp(varList->parts[0], "logout") == 0
+			|| strcmp(varList->parts[0], "quit") == 0) {
+			flagFinished = 1;
+			continue;
+		}
+		
+		varPid = fork();
+
+		if (varPid != 0) {
+			waitpid(varPid, &flagWaitStatus, 0);
+		} else {
+			execvp(varList->parts[0], varList->parts);
+			perror("exec");
+			exit(EXIT_FAILURE);
+		}
 	}
 	exit(EXIT_SUCCESS);
 }
