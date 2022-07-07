@@ -31,10 +31,28 @@ int main(int argc, char * argv[]){
 
     //Conectar
     connect(atrServerSocket, (struct sockaddr *)&atrAddress, sizeof(struct sockaddr));
+    
     int varNumBytes;
-    char varBuffer[100];
-    memset(&varBuffer, 0, sizeof(varBuffer));
-    varNumBytes = recv(atrServerSocket, varBuffer, 100, 0);
-    varBuffer[varNumBytes] = '\0';
-    printf("Received: %s\n", varBuffer);
+    char varMensaje[BUFSIZ];
+    memset(&varMensaje, 0, BUFSIZ);
+    varNumBytes = recv(atrServerSocket, varMensaje, sizeof(varMensaje), 0);
+    //varMensaje[varNumBytes] = '\0'; //EOF
+    printf("Received: %s\n", varMensaje);
+
+    int finished = 0;
+
+    while (!finished)
+    {
+        printf("Ingrese el comando\n");
+        printf(">");
+        memset(varMensaje, 0, BUFSIZ);
+
+        fgets(varMensaje, BUFSIZ, stdin);
+
+        sleep(10);
+
+        send(atrServerSocket, varMensaje, sizeof(varMensaje), 0);
+    }
+    
+    exit(EXIT_SUCCESS);
 }

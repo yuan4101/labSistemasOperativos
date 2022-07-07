@@ -9,6 +9,7 @@
 #include <sys/socket.h> // Sockets
 #include <netinet/in.h> //IPv4
 #include <arpa/inet.h>
+#include "split.h"
 
 #include "protocol.h"
 
@@ -74,6 +75,11 @@ int main(int argc, char *argv[])
     // inet_aton("0.0.0.0", &varAddress.sin_addr);
     varAddress.sin_addr.s_addr = INADDR_ANY; // 0.0.0.0
 
+    printf("%s Connected\n", inet_ntoa(atrClientAddress.sin_addr));
+    
+    //TODO Comunicacion
+    //Crear un hilo pasandole como parametro atrClientSocket (almacenado en un "arreglo")
+
     // 2. Asociar el socket a una direccion (IPv4)
     if (bind(varServerSocket, (struct sockaddr *)&varAddress, sizeof(struct sockaddr_in)) == -1)
     {
@@ -86,6 +92,13 @@ int main(int argc, char *argv[])
         perror("Error -1: Socket no disponible");
         exit(EXIT_FAILURE);
     }
+    send(atrClientSocket, "Welcome!\n", 10, 0);
+    
+    int finished = 0;
+    
+    while (!finished)
+    {
+        printf("Waiting response...");
 
     // el sistema "llena" varClientAddress con la informacion del cliente
     // y almacena en varClientAddressLength el tamaño obtenido de esa direccion
@@ -93,6 +106,33 @@ int main(int argc, char *argv[])
     memset(&varClientAddress, 0, sizeof(struct sockaddr_in));
     socklen_t varClientAddressLength;
     varClientAddressLength = sizeof(struct sockaddr_in); // Tamaño esperado de la direccion
+        int varNumBytes;
+        char varMensaje[BUFSIZ];
+        memset(&varMensaje, 0, BUFSIZ);
+        varNumBytes = recv(atrServerSocket, varMensaje, sizeof(varMensaje), 0);
+        //varMensaje[varNumBytes] = '\0'; //EOF
+
+        split_list * varSplitList;
+        varSplitList = split(varMensaje, " \n\r\t");
+        if (varSplitList->count == 0)
+        {
+            continue;
+        }
+
+        if (strcmp(varSplitList->parts[0], "exit") == 0)
+        {
+            finished = 1;
+        } else if (strcmp(varSplitList->parts[0], "get") == 0 && varSplitList->count == 2)
+        {
+            printf("Obtener %s\n", varSplitList->parts[1]);
+        } else if (strcmp(varSplitList->parts[0], "put") == 0 && varSplitList->count == 2)
+        {
+            printf("Poner %s\n", varSplitList->parts[1]);
+        }
+        
+    }
+
+    printf("Exiting...\n");
 
     atrFinished = 0;
     while (!atrFinished)
