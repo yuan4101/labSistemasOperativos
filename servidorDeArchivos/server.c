@@ -25,7 +25,7 @@ int main(int argc, char * argv[]){
     //Preparar la direccion para asociarla al socket
     memset(&atrAddress, 0, sizeof(struct sockaddr_in));
     atrAddress.sin_family = AF_INET;
-    atrAddress.sin_port = htons(1046);//TODO Recibir el puerto a escuchar por la linea de comandos
+    atrAddress.sin_port = htons(1046); //TODO Recibir el puerto a escuchar por la linea de comandos
     //inet_aton("0.0.0.0", &atrAddress.sin_addr);
     atrAddress.sin_addr.s_addr = INADDR_ANY; //0.0.0.0
 
@@ -43,12 +43,23 @@ int main(int argc, char * argv[]){
     atrClientAddressLength = sizeof(struct sockaddr_in); //Tamaño esperado de la direccion
 
     //Aceptar la conexion
+    printf("Waiting connection...\n");
     atrClientSocket = accept(atrServerSocket, (struct sockaddr *)&atrClientAddress, &atrClientAddressLength);
 
+    if (atrClientSocket == -1)
+    {
+        perror("Error -1");
+        exit(EXIT_FAILURE);
+    }
+    
     //TODO Comunicacion
     //Crear un hilo pasandole como parametro atrClientSocket (almacenado en un "arreglo")
 
-    sleep(5);
+    send(atrClientSocket, "Hello world!.\n", 11, 0);
+
+    printf("Exiting...\n");
+
+    sleep(10);
 
     //Cerrar la conexion con el cliente (el hilo en cuestion cierra la conexion)
     close(atrServerSocket);
