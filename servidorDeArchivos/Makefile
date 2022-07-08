@@ -1,6 +1,6 @@
 all: server.o client.o split.o protocol.o
 	gcc -o server server.o split.o protocol.o -pthread
-	gcc -o client client.o
+	gcc -o client client.o split.o protocol.o
 
 server.o: server.c
 	gcc -c -o server.o server.c
@@ -15,4 +15,4 @@ split.o: split.c
 	gcc -c -o split.o split.c
 
 clean:
-	rm -rf *.o server client protocol files/
+	rm -rf *.o server client protocol split files/
