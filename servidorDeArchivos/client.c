@@ -21,6 +21,8 @@ int atrFinished;
 void handler_sigterm(int);
 
 
+#include "protocol.h"
+
 int main(int argc, char * argv[]){
 
     // #####################   SIGTERM   #########################
@@ -83,6 +85,7 @@ int main(int argc, char * argv[]){
         // Dividir input
         split_list * varSplitList;
         varSplitList = split(varMensaje, " \n\r\t");
+
 
         // Verificar los parametros
         if (EQUALS(varSplitList->parts[0], "exit")) {
