@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdio.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -8,49 +9,112 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "protocol.h"
+#include "split.h"
+
+int atrFinished;
+
+/**
+ * @brief Funcion que maneja el SIGTERM
+ * @param int De la señal recibida
+ */
+void handler_sigterm(int);
+
 
 #include "protocol.h"
 
 int main(int argc, char * argv[]){
-    //Socket del servidor
-    int atrServerSocket;
 
-    //Direccion del servidor
-    struct sockaddr_in atrAddress;
+    // #####################   SIGTERM   #########################
 
-    //Socket IPv4, de tipo flujo (stream)
-    atrServerSocket = socket(AF_INET, SOCK_STREAM, 0);
+    struct sigaction varAct;
+    struct sigaction varOldAct;
+    memset(&varAct, 0, sizeof(struct sigaction));
+    memset(&varOldAct, 0, sizeof(struct sigaction));
 
-    //Preparar la direccion para asociarla al socket
-    memset(&atrAddress, 0, sizeof(struct sockaddr_in));
-    atrAddress.sin_family = AF_INET;
-    atrAddress.sin_port = htons(1046); //TODO Recibir el puerto a escuchar por la linea de comandos
-    //inet_aton("0.0.0.0", &atrAddress.sin_addr);
-    atrAddress.sin_addr.s_addr = INADDR_ANY; //0.0.0.0
+    // Cuando se reciba SIGTERM se ejecutara handler_sigterm
+    varAct.sa_handler = handler_sigterm;
 
-    //Conectar
-    connect(atrServerSocket, (struct sockaddr *)&atrAddress, sizeof(struct sockaddr));
+    // Instalamos el navegador para SIGTERM
+    sigaction(SIGTERM, &varAct, &varOldAct);
+
+    // ###########################################################
+
+    // Lectura de puerto desde consola
+    if (argc != 2) {
+        fprintf(stderr, "Debe especificar el puerto del cliente.\n");
+        exit(EXIT_FAILURE);
+    }
+    int varPortServer = 0;
+    varPortServer = atoi(argv[1]);
+
+    // Socket del servidor
+    int varServerSocket;
+
+    // Direccion IPV4
+    struct sockaddr_in varAddress;
+
+    // Socket IPv4, de tipo flujo (stream)
+    varServerSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+    // Preparar la direccion para asociarla al socket
+    memset(&varAddress, 0, sizeof(struct sockaddr_in));
+    varAddress.sin_family = AF_INET;
+    varAddress.sin_port = htons(varPortServer);
+    varAddress.sin_addr.s_addr = INADDR_ANY;
+
+    // Conectar
+    connect(varServerSocket, (struct sockaddr *)&varAddress, sizeof(struct sockaddr));
     
+    // Recibir mensaje de bienvenida del servidor
     int varNumBytes;
     char varMensaje[BUFSIZ];
     memset(&varMensaje, 0, BUFSIZ);
-    varNumBytes = recv(atrServerSocket, varMensaje, sizeof(varMensaje), 0);
-    //varMensaje[varNumBytes] = '\0'; //EOF
-    printf("Received: %s\n", varMensaje);
+    varNumBytes = read(varServerSocket, varMensaje, sizeof(varMensaje));
+    printf("Received: %s", varMensaje);
 
-    int varFinished = 0;
+    atrFinished = 0;
 
-    while (!varFinished)
+    while (!atrFinished)
     {
-        printf("Ingrese el comando\n");
-        printf(">");
-        memset(varMensaje, 0, BUFSIZ);
+        // Input from stdin
+        printf("\nRequest\n> ");
+        memset(&varMensaje, 0, BUFSIZ);
         fgets(varMensaje, BUFSIZ, stdin);
 
-        
+        // Dividir input
+        split_list * varSplitList;
+        varSplitList = split(varMensaje, " \n\r\t");
 
-        send(atrServerSocket, varMensaje, sizeof(varMensaje), 0);
+
+        // Verificar los parametros
+        if (EQUALS(varSplitList->parts[0], "exit")) {
+            varSplitList->parts[1] = "0";
+            atrFinished = 1;
+        } else if (varSplitList->count == 1 || varSplitList->count > 2) {
+            fprintf(stderr, "Debe especificar el comando y el nombre del archivo.\n");
+            continue;
+        }
+
+        // Enviar request
+        request varRequest;
+        strcpy(varRequest.atrOperation, varSplitList->parts[0]);
+        strcpy(varRequest.atrFileName, varSplitList->parts[1]);
+        write(varServerSocket, (char *)&varRequest, sizeof(request));
     }
-    
+
+    printf("\nClosing connection with server...\n");
+    close(varServerSocket);
+
+    printf("Closing client...\n");
+
     exit(EXIT_SUCCESS);
+}
+
+void handler_sigterm(int atrSig)
+{
+    printf("SIGTERM Recibida! %d\n", atrSig);
+    atrFinished = 1;
+    // Cerrar todos los recursos abiertos
+    fclose(stdin);
 }
