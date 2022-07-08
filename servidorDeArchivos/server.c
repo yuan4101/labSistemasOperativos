@@ -20,7 +20,7 @@
 
 int atrClientsCount = 0;
 static int atrUID = 10;
-client_t *atrClients[MAX_CLIENTS];
+
 int atrFinishedServer = 0;
 
 /**
@@ -32,6 +32,8 @@ typedef struct
     int atrSocket;
     int atrUID;
 } client_t;
+
+client_t *atrClients[MAX_CLIENTS];
 
 /**
  * @brief Hilo request
@@ -65,6 +67,12 @@ void remove_client_queue(int prmUID);
  * @param int De la señal recibida
  */
 void handler_sigterm(int);
+
+/**
+ * @brief Factoriza el uso de perror("errorMessage") y exit(EXIT_FAILURE)
+ * @param errorMessage 
+ */
+void DieWithError(char *errorMessage);
 
 /**
  * @brief main
@@ -148,14 +156,13 @@ int main(int argc, char *argv[])
     printf("===      Servidor iniciado     ===\n");
     printf("=== Servidor en el puerto %d ===\n", varPortServer);
 
-
     while (!atrFinishedServer)
     {
         // Tamaño esperado de la direccion
         socklen_t varClientAddressLength;
         varClientAddressLength = sizeof(struct sockaddr_in);
+
         // 4. Aceptar la conexion
-        printf("Waiting connection...\n");
         varClientSocket = accept(varServerSocket, (struct sockaddr *)&varClientAddress, &varClientAddressLength);
 
         if ((atrClientsCount + 1) == MAX_CLIENTS)
@@ -183,7 +190,6 @@ int main(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-
 void *client_request(void *prmArg)
 {
     int varFinished = 0;
@@ -194,7 +200,7 @@ void *client_request(void *prmArg)
     memset(varBufferOut, 0, BUFSIZ);
 
     atrClientsCount++;
-    sprintf(varBufferOut, "%s Client connected\nClients connected : %d", inet_ntoa(varClient->atrAddress.sin_addr), atrClientsCount);
+    sprintf(varBufferOut, "%s Client connected, Clients connected: %d\n", inet_ntoa(varClient->atrAddress.sin_addr), atrClientsCount);
     printf("%s", varBufferOut);
     write_message_client(varBufferOut, varClient);
 
@@ -208,11 +214,11 @@ void *client_request(void *prmArg)
         varNumBytes = read(varClient->atrSocket, (char *)&varRequest, sizeof(request));
         if (varNumBytes == 0) {
             fprintf(stderr, "Client disconnected unexpectedly or EOF (read)\n");
-            varFinished = -1;
+            break;
         }
         else if (varNumBytes == -1) {
             fprintf(stderr, "Error (read)\n");
-            continue;
+            break;
         }
 
         printf("Operation: %s\nFilename: %s\n", varRequest.atrOperation, varRequest.atrFileName);
@@ -252,7 +258,7 @@ void *client_request(void *prmArg)
     // Cerrar la conexion con el cliente (el hilo en cuestion cierra la conexion)
     atrClientsCount--;
     memset(&varBufferOut, 0, BUFSIZ);
-    sprintf(varBufferOut, "Closing connection with client %s...\nClients connected : %d", inet_ntoa(varClient->atrAddress.sin_addr), atrClientsCount);
+    sprintf(varBufferOut, "Closing connection with client %s, Clients connected: %d\n", inet_ntoa(varClient->atrAddress.sin_addr), atrClientsCount);
     printf("%s", varBufferOut);
     write_message_client(varBufferOut, varClient);
     
@@ -313,7 +319,12 @@ void remove_client_queue(int prmUID)
 void handler_sigterm(int atrSig)
 {
     printf("SIGTERM Recibida! %d\n", atrSig);
-    atrFinished = 1;
+    atrFinishedServer = 1;
     // Cerrar todos los recursos abiertos
     fclose(stdin);
+}
+void DieWithError(char *errorMessage)
+{
+    perror(errorMessage);
+    exit(EXIT_FAILURE);
 }

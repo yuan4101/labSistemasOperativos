@@ -26,9 +26,3 @@ file_info read_file_atr(char * prmFileName){
 
     return varInfo;
 }
-
-void DieWithError(char *errorMessage)
-{
-    perror(errorMessage);
-    exit(EXIT_FAILURE);
-}

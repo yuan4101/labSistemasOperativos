@@ -37,10 +37,5 @@ typedef struct
  * @return file_info 
  */
 file_info read_file_atr(char * prmFileName);
-/**
- * @brief Factoriza el uso de perror("errorMessage") y exit(EXIT_FAILURE)
- * @param errorMessage 
- */
-void DieWithError(char *errorMessage);
 
 #endif
