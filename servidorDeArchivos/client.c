@@ -13,9 +13,6 @@ int main(int argc, char * argv[]){
     //Socket del servidor
     int atrServerSocket;
 
-    //Socket del cliente
-    int atrClientSocket;
-
     //Direccion del servidor
     struct sockaddr_in atrAddress;
 
@@ -39,9 +36,9 @@ int main(int argc, char * argv[]){
     //varMensaje[varNumBytes] = '\0'; //EOF
     printf("Received: %s\n", varMensaje);
 
-    int finished = 0;
+    int varFinished = 0;
 
-    while (!finished)
+    while (!varFinished)
     {
         printf("Ingrese el comando\n");
         printf(">");
@@ -49,7 +46,7 @@ int main(int argc, char * argv[]){
 
         fgets(varMensaje, BUFSIZ, stdin);
 
-        sleep(10);
+        //sleep(10);
 
         send(atrServerSocket, varMensaje, sizeof(varMensaje), 0);
     }

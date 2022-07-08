@@ -25,7 +25,6 @@ typedef struct
 
 file_info read_file_atr(char * prmFileName);
 
-//int read_form_socket(file_info * varInfo, char * prmDestination)
 
 #define EQUALS(s1, s2) (strcmp(s1, s2) == 0)
 

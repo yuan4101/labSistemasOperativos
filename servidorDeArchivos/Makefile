@@ -1,5 +1,5 @@
 all: server.o client.o split.o protocol.o
-	gcc -o server server.o split.o -pthread
+	gcc -o server server.o split.o protocol.o -pthread
 	gcc -o client client.o
 
 server.o: server.c

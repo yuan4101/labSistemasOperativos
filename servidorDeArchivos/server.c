@@ -46,17 +46,17 @@ int main(int argc, char *argv[])
 
     memset(&varAct, 0, sizeof(struct sigaction));
     memset(&varOldAct, 0, sizeof(struct sigaction));
-    
-    //Cuando se reciba SIGTERM se ejecutara handle_sigterm
+
+    // Cuando se reciba SIGTERM se ejecutara handle_sigterm
     varAct.sa_handler = handle_sigterm;
-    //Instalamos el navegador para SIGTERM
+    // Instalamos el navegador para SIGTERM
     sigaction(SIGTERM, &varAct, &varOldAct);
 
     // Socket del servidor
     int varServerSocket;
     // Socket del cliente
     int varClientSocket;
-    // Direccion del servidor (IPv4)
+    // Direccion (IPv4)
     struct sockaddr_in varAddress;
 
     // 1. Socket IPv4, de tipo flujo (stream)
@@ -66,18 +66,19 @@ int main(int argc, char *argv[])
         perror("Error -1: No se pudo crear el socket");
         exit(EXIT_FAILURE);
     }
+
     // Preparar la direccion para asociarla al socket
     memset(&varAddress, 0, sizeof(struct sockaddr_in));
     varAddress.sin_family = AF_INET;
-        // Testing: Recibir el puerto a escuchar por la linea de comandos
+
+    // Testing: Recibir el puerto a escuchar por la linea de comandos
     varAddress.sin_port = htons(varPortServer);
+
     // inet_aton("0.0.0.0", &varAddress.sin_addr);
     varAddress.sin_addr.s_addr = INADDR_ANY; // 0.0.0.0
 
-    printf("%s Connected\n", inet_ntoa(varAddress.sin_addr));
-    
-    //TODO Comunicacion
-    //Crear un hilo pasandole como parametro atrClientSocket (almacenado en un "arreglo")
+    // TODO Comunicacion
+    // Crear un hilo pasandole como parametro atrClientSocket (almacenado en un "arreglo")
 
     // 2. Asociar el socket a una direccion (IPv4)
     if (bind(varServerSocket, (struct sockaddr *)&varAddress, sizeof(struct sockaddr_in)) == -1)
@@ -91,94 +92,50 @@ int main(int argc, char *argv[])
         perror("Error -1: Socket no disponible");
         exit(EXIT_FAILURE);
     }
-    send(varClientSocket, "Welcome!\n", 10, 0);
-    
-    int finished = 0;
-    socklen_t varClientAddressLength;
-    
-    while (!finished)
+
+    socklen_t varAddressLength;
+    varAddressLength = sizeof(struct sockaddr_in); // Tamaño esperado de la direccion
+
+    // 4. Aceptar la conexion
+    printf("Waiting response...\n");
+    varClientSocket = accept(varServerSocket, (struct sockaddr *)&varAddress, &varAddressLength);
+    if (varClientSocket == -1)
     {
-        printf("Waiting response...");
-
-    // el sistema "llena" varClientAddress con la informacion del cliente
-    // y almacena en varClientAddressLength el tamaño obtenido de esa direccion
-    struct sockaddr_in varClientAddress;
-    memset(&varClientAddress, 0, sizeof(struct sockaddr_in));
-    varClientAddressLength = sizeof(struct sockaddr_in); // Tamaño esperado de la direccion
-        int varNumBytes;
-        char varMensaje[BUFSIZ];
-        memset(&varMensaje, 0, BUFSIZ);
-        varNumBytes = recv(varServerSocket, varMensaje, sizeof(varMensaje), 0);
-        //varMensaje[varNumBytes] = '\0'; //EOF
-
-        split_list * varSplitList;
-        varSplitList = split(varMensaje, " \n\r\t");
-        if (varSplitList->count == 0)
-        {
-            continue;
-        }
-
-        if (strcmp(varSplitList->parts[0], "exit") == 0)
-        {
-            finished = 1;
-        } else if (strcmp(varSplitList->parts[0], "get") == 0 && varSplitList->count == 2)
-        {
-            printf("Obtener %s\n", varSplitList->parts[1]);
-        } else if (strcmp(varSplitList->parts[0], "put") == 0 && varSplitList->count == 2)
-        {
-            printf("Poner %s\n", varSplitList->parts[1]);
-        }
-        
+        perror("Error -1: No se pudo obtener la descripcion del socket");
+        exit(EXIT_FAILURE);
     }
-
-    printf("Exiting...\n");
+    printf("%s Client connected\n", inet_ntoa(varAddress.sin_addr));
+    send(varClientSocket, "Welcome!\n", 10, 0);
 
     atrFinished = 0;
     while (!atrFinished)
     {
-        // 4. Aceptar la conexion
-        printf("Waiting for conections...\n");
-        varClientSocket = accept(varServerSocket, (struct sockaddr *)&varAddress, &varClientAddressLength);
-        if(varClientSocket == -1){
-            perror("Error -1: No se pudo obtener la descripcion del socket");
+
+        int varNumBytes;
+        char varMensaje[BUFSIZ];
+        (&varMensaje, 0, BUFSIZ);
+        varNumBytes = recv(varClientSocket, varMensaje, sizeof(varMensaje), 0);
+        if (varNumBytes == 0)
+        {
             exit(EXIT_FAILURE);
         }
-        printf("Client coneccted!\n");
+
+        printf("Received: %s, %d\n", varMensaje, varNumBytes);
+
+        split_list * varSplitList;
+        varSplitList = split(varMensaje, " \n\r\t");
+
+        if (EQUALS(varSplitList->parts[0], "exit")){
+            atrFinished = 1;
+        }
 
         // TODO Comunicacion
         // Crear un hilo pasandole como parametro varClientSocket (almacenado en un "arreglo")
-        sleep(5);
+        //sleep(5);
 
-        request varRequest;
-        memset(&varRequest, 0, sizeof(request));
-        read(varClientSocket, (char*)&varRequest, sizeof(request));
-        printf("Solicitud: operacion: %s archivo: %s\n", 
-                varRequest.atrOperation, varRequest.atrFileName);
+        //
 
-        if(EQUALS(varRequest.atrOperation, "get")){
-            //TODO: Enviar arhivo
-            //1. Verificar si el archivo existe
-            //2. Enviar informacion del archivo al cliente (size = -1) si
-            //el archivo no existe
-            //3. Si el arvhico existe:
-            //3.1 Abrir el archivo en modo lectura
-            //3.2 Leer una parte del archivo
-            //3.3 Escribir la parte al socket
-            //3.4 Repetir 3.2 miestras falte por leer
-        }else if(EQUALS(varRequest.atrOperation, "put")){
-            //TODO: Recibir archivo
-            //2. Recibir la informacion del archivo del cliente
-            //3. Crear la ruta "Files/FILENAME"
-            //3.1 Abrir el archivo en modo escritura
-            //3.2 Leer una parte del socket
-            //3.3 Escribir la parte en el archivo
-            //3.4 Repetir 3.2 mientras falte por leer
-        }else if(EQUALS(varRequest.atrOperation, "Exit")){
-            // Cerrar la conexion con el cliente (el hilo en cuestion cierra la conexion)
-            printf("Closing connection with client...\n");
-            close(varClientSocket);
-        }
-        printf("Closing connection...\n");
+        //printf("Closing connection...\n");
     }
     // Cerrar el socket original para liberar el puerto
     close(varServerSocket);
@@ -186,10 +143,49 @@ int main(int argc, char *argv[])
     exit(EXIT_SUCCESS);
 }
 
-
-void handle_sigterm(int atrSig){
+void handle_sigterm(int atrSig)
+{
     printf("SIGTERM Recibida! %d\n", atrSig);
     atrFinished = 1;
-    //Cerrar todos los recursos abiertos
+    // Cerrar todos los recursos abiertos
     fclose(stdin);
+}
+
+void tempFuncion()
+{
+    int varClientSocket;
+    request varRequest;
+    memset(&varRequest, 0, sizeof(request));
+    read(varClientSocket, (char *)&varRequest, sizeof(request));
+    printf("Solicitud: operacion: %s archivo: %s\n",
+           varRequest.atrOperation, varRequest.atrFileName);
+
+    if (EQUALS(varRequest.atrOperation, "get"))
+    {
+        // TODO: Enviar arhivo
+        // 1. Verificar si el archivo existe
+        // 2. Enviar informacion del archivo al cliente (size = -1) si
+        // el archivo no existe
+        // 3. Si el arvhico existe:
+        // 3.1 Abrir el archivo en modo lectura
+        // 3.2 Leer una parte del archivo
+        // 3.3 Escribir la parte al socket
+        // 3.4 Repetir 3.2 miestras falte por leer
+    }
+    else if (EQUALS(varRequest.atrOperation, "put"))
+    {
+        // TODO: Recibir archivo
+        // 2. Recibir la informacion del archivo del cliente
+        // 3. Crear la ruta "Files/FILENAME"
+        // 3.1 Abrir el archivo en modo escritura
+        // 3.2 Leer una parte del socket
+        // 3.3 Escribir la parte en el archivo
+        // 3.4 Repetir 3.2 mientras falte por leer
+    }
+    else if (EQUALS(varRequest.atrOperation, "Exit"))
+    {
+        // Cerrar la conexion con el cliente (el hilo en cuestion cierra la conexion)
+        printf("Closing connection with client...\n");
+        close(varClientSocket);
+    }
 }
