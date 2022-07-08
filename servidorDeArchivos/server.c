@@ -16,8 +16,8 @@
 int atrFinished;
 
 /**
- * @brief Funcio manejadora de SIGTERM
- * @param int De la senal resivida
+ * @brief Funcion manejadora de SIGTERM
+ * @param int De la senal recibida
  */
 void handle_sigterm(int);
 
@@ -30,7 +30,6 @@ void handle_sigterm(int);
  */
 int main(int argc, char *argv[])
 {
-
     int varPortServer;
 
     if (argc != 2)
@@ -48,7 +47,7 @@ int main(int argc, char *argv[])
     memset(&varAct, 0, sizeof(struct sigaction));
     memset(&varOldAct, 0, sizeof(struct sigaction));
     
-    //Cuando se reciva SIGTERM se ejecutara handle_sigterm
+    //Cuando se reciba SIGTERM se ejecutara handle_sigterm
     varAct.sa_handler = handle_sigterm;
     //Instalamos el navegador para SIGTERM
     sigaction(SIGTERM, &varAct, &varOldAct);
@@ -75,7 +74,7 @@ int main(int argc, char *argv[])
     // inet_aton("0.0.0.0", &varAddress.sin_addr);
     varAddress.sin_addr.s_addr = INADDR_ANY; // 0.0.0.0
 
-    printf("%s Connected\n", inet_ntoa(atrClientAddress.sin_addr));
+    printf("%s Connected\n", inet_ntoa(varAddress.sin_addr));
     
     //TODO Comunicacion
     //Crear un hilo pasandole como parametro atrClientSocket (almacenado en un "arreglo")
@@ -92,9 +91,10 @@ int main(int argc, char *argv[])
         perror("Error -1: Socket no disponible");
         exit(EXIT_FAILURE);
     }
-    send(atrClientSocket, "Welcome!\n", 10, 0);
+    send(varClientSocket, "Welcome!\n", 10, 0);
     
     int finished = 0;
+    socklen_t varClientAddressLength;
     
     while (!finished)
     {
@@ -104,12 +104,11 @@ int main(int argc, char *argv[])
     // y almacena en varClientAddressLength el tamaño obtenido de esa direccion
     struct sockaddr_in varClientAddress;
     memset(&varClientAddress, 0, sizeof(struct sockaddr_in));
-    socklen_t varClientAddressLength;
     varClientAddressLength = sizeof(struct sockaddr_in); // Tamaño esperado de la direccion
         int varNumBytes;
         char varMensaje[BUFSIZ];
         memset(&varMensaje, 0, BUFSIZ);
-        varNumBytes = recv(atrServerSocket, varMensaje, sizeof(varMensaje), 0);
+        varNumBytes = recv(varServerSocket, varMensaje, sizeof(varMensaje), 0);
         //varMensaje[varNumBytes] = '\0'; //EOF
 
         split_list * varSplitList;
@@ -139,7 +138,7 @@ int main(int argc, char *argv[])
     {
         // 4. Aceptar la conexion
         printf("Waiting for conections...\n");
-        varClientSocket = accept(varServerSocket, (struct sockaddr *)&varClientAddress, &varClientAddressLength);
+        varClientSocket = accept(varServerSocket, (struct sockaddr *)&varAddress, &varClientAddressLength);
         if(varClientSocket == -1){
             perror("Error -1: No se pudo obtener la descripcion del socket");
             exit(EXIT_FAILURE);
