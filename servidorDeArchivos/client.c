@@ -9,6 +9,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "protocol.h"
+
 int main(int argc, char * argv[]){
     //Socket del servidor
     int atrServerSocket;
@@ -43,10 +45,9 @@ int main(int argc, char * argv[]){
         printf("Ingrese el comando\n");
         printf(">");
         memset(varMensaje, 0, BUFSIZ);
-
         fgets(varMensaje, BUFSIZ, stdin);
 
-        //sleep(10);
+        
 
         send(atrServerSocket, varMensaje, sizeof(varMensaje), 0);
     }

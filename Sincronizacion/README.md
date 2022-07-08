@@ -7,6 +7,6 @@ los problemas de los lectores escritores y el barbero dormilón presentadas por
 Tanenbaum [1]. La solución se deberá implementar mediante hilos, como el
 ejemplo del Productor Consumidor visto en clase.<br>
 
-* Problema de los lectores escritores: La solución deberá crear un número a 50 de lectores, y un número M mayor a 20 de escritores.
+* Problema de los lectores escritores: La solución deberá crear un número mayor a 50 de lectores, y un número M mayor a 20 de escritores.
 
 * Problema del barbero dormilón: La solución implementada deberá crear un número N mayor a 100 clientes.
