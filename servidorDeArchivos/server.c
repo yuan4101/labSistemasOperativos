@@ -1,61 +1,70 @@
+#include <sys/socket.h> // Sockets
+#include <netinet/in.h> //IPv4
+#include <arpa/inet.h>
+
 #include <pthread.h>
 #include <semaphore.h>
 #include <signal.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h> // Sockets
-#include <netinet/in.h> //IPv4
-#include <arpa/inet.h>
 #include <errno.h>
-#include "split.h"
+#include <sys/types.h>
 
+#include "split.h"
 #include "protocol.h"
 
 #define MAX_CLIENTS 100
 
 int atrClientsCount = 0;
 static int atrUID = 10;
-client_t * atrClients[MAX_CLIENTS];
+client_t *atrClients[MAX_CLIENTS];
+int atrFinishedServer = 0;
 
-
-
+/**
+ * @brief Tipo de dato del cliente
+ */
+typedef struct
+{
+    struct sockaddr_in atrAddress;
+    int atrSocket;
+    int atrUID;
+} client_t;
 
 /**
  * @brief Hilo request
  * @param prmArg identificador del cliente
  * @return NULL
  */
-void *clientRequest(void *prmArg);
+void *client_request(void *prmArg);
+/**
+ * @brief Envia un mensaje al cliente
+ * @param prmMessage 
+ * @param prmClient 
+ */
+void send_message_client(char *prmMessage, client_t *prmClient);
 /**
  * @brief Imprimero la direccion IP del cliente
- * @param prmAddress 
+ * @param prmAddress
  */
 void print_client_addr(struct sockaddr_in prmAddress);
 /**
  * @brief Agrega clientes a la lista-Cola
- * @param prmClient 
+ * @param prmClient
  */
-void queue_add(client_t *prmClient);
+void add_client_queue(client_t *prmClient);
 /**
  * @brief Elimina clientes de la lista-Cola
- * @param prmUID 
+ * @param prmUID
  */
-void queue_remove(int prmUID);
+void remove_client_queue(int prmUID);
 /**
  * @brief Funcion manejadora de SIGTERM
  * @param int De la senal recibida
  */
 void handle_sigterm(int);
-
-
-
-int atrFinishedServer;
-int atrFinished;
-
-int *atrID_clientsSockets; // Arreglo de "prmIndex" para los sockets de los clientes
 
 /**
  * @brief main
@@ -66,23 +75,18 @@ int *atrID_clientsSockets; // Arreglo de "prmIndex" para los sockets de los clie
  */
 int main(int argc, char *argv[])
 {
-    int varPortServer;
-    int varIndex;
-
     if (argc != 2)
     {
         fprintf(stderr, "Debe especificar el puerto del servidor.\n");
         exit(EXIT_FAILURE);
     }
 
-    varPortServer = atoi(argv[1]);
+    int varPortServer = atoi(argv[1]);
 
     struct sigaction varAct;
     struct sigaction varOldAct;
-
     memset(&varAct, 0, sizeof(struct sigaction));
     memset(&varOldAct, 0, sizeof(struct sigaction));
-
     // Cuando se reciba SIGTERM se ejecutara handle_sigterm
     varAct.sa_handler = handle_sigterm;
     // Instalamos el navegador para SIGTERM
@@ -97,8 +101,7 @@ int main(int argc, char *argv[])
     struct sockaddr_in varServerAddress;
     struct sockaddr_in varClientAddress;
     // Arreglo de ID de hilo para los clientes
-    pthread_t *thread_client; 
-
+    pthread_t thread_client;
 
     // 1. Socket IPv4, de tipo flujo (stream)
     varServerSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -108,10 +111,11 @@ int main(int argc, char *argv[])
     varServerAddress.sin_family = AF_INET;
     varServerAddress.sin_port = htons(varPortServer);
     varServerAddress.sin_addr.s_addr = INADDR_ANY; // 0.0.0.
+
     if (setsockopt(varServerSocket, SOL_SOCKET, (SO_REUSEPORT | SO_REUSEADDR), (char *)&varOption, sizeof(varOption)) < 0)
-	{
-		DieWithError("ERROR -1: setsockopt falló");
-	}
+    {
+        DieWithError("ERROR -1: setsockopt falló");
+    }
     // 2. Asociar el socket a una direccion (IPv4)
     if (bind(varServerSocket, (struct sockaddr *)&varServerAddress, sizeof(struct sockaddr_in)) < 0)
     {
@@ -122,23 +126,20 @@ int main(int argc, char *argv[])
     {
         DieWithError("Error -1: Socket no disponible");
     }
-    
-    printf("===      Servidor iniciado     ===\n");
-	printf("=== Servidor en el puerto %d ===\n", varPortServer);
 
-    atrFinishedServer = 0;
-    varIndex = 0;
+    printf("===      Servidor iniciado     ===\n");
+    printf("=== Servidor en el puerto %d ===\n", varPortServer);
 
     while (!atrFinishedServer)
     {
         // Tamaño esperado de la direccion
         socklen_t varClientAddressLength;
-        varClientAddressLength = sizeof(struct sockaddr_in); 
+        varClientAddressLength = sizeof(struct sockaddr_in);
         // 4. Aceptar la conexion
         printf("Waiting response...\n");
         varClientSocket = accept(varServerSocket, (struct sockaddr *)&varClientAddress, &varClientAddressLength);
 
-        if((atrClientsCount + 1) == MAX_CLIENTS)
+        if ((atrClientsCount + 1) == MAX_CLIENTS)
         {
             printf("Se alcanzo el numero maximo de cliente");
             print_client_addr(varClientAddress);
@@ -147,34 +148,42 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        client_t * varClient = (client_t *) malloc(sizeof(client_t));
-        varClient -> atrAddress = varClientAddress;
-        varClient -> atrSocket = varClientSocket;
-        varClient -> atrUID = atrUID++;
+        client_t *varClient = (client_t *)malloc(sizeof(client_t));
+        varClient->atrAddress = varClientAddress;
+        varClient->atrSocket = varClientSocket;
+        varClient->atrUID = atrUID++;
 
         // Crea un hilo pasandole como parametro varClientSocket (almacenado en un "arreglo")
-        queue_add(varClient);
-            // TODO: FALLA AL CREAR HILO
-        pthread_create(&thread_client, NULL, &clientRequest, (void *)varClient);
-        sleep(1);
+        add_client_queue(varClient);
+        pthread_create(&thread_client, NULL, &client_request, (void *)varClient);
 
-        // Cerrar el socket original para liberar el puerto
-        close(varServerSocket);
-        exit(EXIT_SUCCESS);
+        sleep(1);
     }
+    // Cerrar el socket original para liberar el puerto
+    close(varServerSocket);
+    return EXIT_SUCCESS;
 }
 
-//TODO:
-void *clientRequest(void *prmArg)
+void *client_request(void *prmArg)
 {
-    //printf("%s Client connected\n", inet_ntoa(varServerAddress.sin_addr));
-    int varIDSocket;
-    varIDSocket = *(int *)prmArg; // Recupera el ID del socket del cliente
-    while (!atrFinished)
+    int varFinished = 0;
+
+    client_t *varClient = (client_t *)prmArg; // Recupera el cliente pasado por parametro
+
+    char varBufferOut[BUFSIZ];
+    memset(varBufferOut, 0, BUFSIZ);
+    request varRequest;
+
+    atrClientsCount++;
+    sprintf(varBufferOut, "%s Client connected\nClients connected : %d", inet_ntoa(varClient->atrAddress.sin_addr), atrClientsCount);
+    printf("%s", varBufferOut);
+    send_message_client(varBufferOut, varClient);
+
+    while (!varFinished)
     {
-        request varRequest;
+
         memset(&varRequest, 0, sizeof(request));
-        read(varIDSocket, (char *)&varRequest, sizeof(request));
+        read(varClient->atrSocket, (char *)&varRequest, sizeof(request));
         printf("Solicitud: operacion: %s archivo: %s\n",
                varRequest.atrOperation, varRequest.atrFileName);
 
@@ -200,49 +209,73 @@ void *clientRequest(void *prmArg)
             // 3.3 Escribir la parte en el archivo
             // 3.4 Repetir 3.2 mientras falte por leer
         }
-        else if (EQUALS(varRequest.atrOperation, "Exit"))
+        else if (EQUALS(varRequest.atrOperation, "exit"))
         {
             // Cerrar la conexion con el cliente (el hilo en cuestion cierra la conexion)
-            printf("Closing connection with client...\n");
-            close(varIDSocket);
-            atrFinished = -1;
+            atrClientsCount--;
+            memset(&varBufferOut, 0, BUFSIZ);
+            sprintf(varBufferOut, "Closing connection with client %d...\nClients connected : %d", varClient->atrAddress, atrClientsCount);
+            printf("%s", varBufferOut);
+            send_message_client(varBufferOut, varClient);
+            varFinished = -1;
         }
+        else
+        {
+            printf("La operacion recibida no existe...\n");
+        }
+    }
+
+    // Elimina el cliente del socket
+    close(varClient->atrSocket);
+    // Elimina el cliente de la cola
+    remove_client_queue(varClient->atrUID);
+    free(varClient);
+    // Libera el hilo de la ejecucion
+    pthread_detach(pthread_self());
+
+    return NULL;
+}
+void send_message_client(char *prmMessage, client_t *prmClient)
+{
+    if (send(prmClient->atrSocket, prmMessage, strlen(prmMessage), 0) == -1)
+    {
+        DieWithError("ERROR -1: error al enviar el mensaje");
     }
 }
 void print_client_addr(struct sockaddr_in prmAddress)
 {
-	printf("%d.%d.%d.%d",
-		   prmAddress.sin_addr.s_addr & 0xff,
-		   (prmAddress.sin_addr.s_addr & 0xff00) >> 8,
-		   (prmAddress.sin_addr.s_addr & 0xff0000) >> 16,
-		   (prmAddress.sin_addr.s_addr & 0xff000000) >> 24);
+    printf("%d.%d.%d.%d",
+           prmAddress.sin_addr.s_addr & 0xff,
+           (prmAddress.sin_addr.s_addr & 0xff00) >> 8,
+           (prmAddress.sin_addr.s_addr & 0xff0000) >> 16,
+           (prmAddress.sin_addr.s_addr & 0xff000000) >> 24);
 
-	// Imprime la direccion IP del cliente
+    // Imprime la direccion IP del cliente
 }
-void queue_add(client_t *prmClient)
+void add_client_queue(client_t *prmClient)
 {
-	for (int i = 0; i < MAX_CLIENTS; ++i)
-	{
-		if (!atrClients[i])
-		{
-			atrClients[i] = prmClient;
-			break;
-		}
-	}
+    for (int varIndex = 0; varIndex < MAX_CLIENTS; ++varIndex)
+    {
+        if (!atrClients[varIndex])
+        {
+            atrClients[varIndex] = prmClient;
+            break;
+        }
+    }
 }
-void queue_remove(int prmUID)
+void remove_client_queue(int prmUID)
 {
-	for (int i = 0; i < MAX_CLIENTS; ++i)
-	{
-		if (atrClients[i])
-		{
-			if (atrClients[i]->atrUID == prmUID)
-			{
-				atrClients[i] = NULL;
-				break;
-			}
-		}
-	}
+    for (int varIndex = 0; varIndex < MAX_CLIENTS; ++varIndex)
+    {
+        if (atrClients[varIndex])
+        {
+            if (atrClients[varIndex]->atrUID == prmUID)
+            {
+                atrClients[varIndex] = NULL;
+                break;
+            }
+        }
+    }
 }
 void handle_sigterm(int atrSig)
 {
