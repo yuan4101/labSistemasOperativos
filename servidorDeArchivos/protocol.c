@@ -1,6 +1,5 @@
 #include "protocol.h"
 
-
 file_info read_file_atr(char * prmFileName){
     
     struct stat varStat;
@@ -25,4 +24,10 @@ file_info read_file_atr(char * prmFileName){
     strcpy(varInfo.atrFileNeme, basename(prmFileName));
 
     return varInfo;
+}
+
+void DieWithError(char *errorMessage)
+{
+    perror(errorMessage);
+    exit(EXIT_FAILURE);
 }

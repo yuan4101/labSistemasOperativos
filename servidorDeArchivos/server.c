@@ -1,18 +1,3 @@
-#include <sys/socket.h> // Sockets
-#include <netinet/in.h> //IPv4
-#include <arpa/inet.h>
-
-#include <pthread.h>
-#include <semaphore.h>
-#include <signal.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-
 #include "split.h"
 #include "protocol.h"
 
@@ -67,12 +52,6 @@ void remove_client_queue(int prmUID);
  * @param int De la señal recibida
  */
 void handler_sigterm(int);
-
-/**
- * @brief Factoriza el uso de perror("errorMessage") y exit(EXIT_FAILURE)
- * @param errorMessage 
- */
-void DieWithError(char *errorMessage);
 
 /**
  * @brief main
@@ -322,9 +301,4 @@ void handler_sigterm(int atrSig)
     atrFinishedServer = 1;
     // Cerrar todos los recursos abiertos
     fclose(stdin);
-}
-void DieWithError(char *errorMessage)
-{
-    perror(errorMessage);
-    exit(EXIT_FAILURE);
 }

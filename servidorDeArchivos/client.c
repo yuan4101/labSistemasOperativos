@@ -1,16 +1,7 @@
-#include <pthread.h>
-#include <semaphore.h>
-#include <stdio.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include "protocol.h"
 #include "split.h"
+
+#include "protocol.h"
 
 int atrFinished;
 
@@ -19,9 +10,6 @@ int atrFinished;
  * @param int De la señal recibida
  */
 void handler_sigterm(int);
-
-
-#include "protocol.h"
 
 int main(int argc, char * argv[]){
 

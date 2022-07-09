@@ -8,14 +8,17 @@
 #include <pthread.h>
 #include <limits.h>
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <libgen.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include <errno.h>
+#include <libgen.h>
 
 #define EQUALS(varString1, varString2) (strcmp(varString1, varString2) == 0)
 #define NOEQUALS(varString1, varString2) (strcmp(varString1, varString2) != 0)
@@ -37,5 +40,10 @@ typedef struct
  * @return file_info 
  */
 file_info read_file_atr(char * prmFileName);
+/**
+ * @brief Factoriza el uso de perror("errorMessage") y exit(EXIT_FAILURE)
+ * @param errorMessage 
+ */
+void DieWithError(char *errorMessage);
 
 #endif
