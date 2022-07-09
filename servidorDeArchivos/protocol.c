@@ -3,25 +3,21 @@
 file_info read_file_atr(char * prmFileName){
     
     struct stat varStat;
+    file_info varInfo;
 
     if(stat(prmFileName, &varStat) < 0){
-        perror("stat");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "No existe el directorio");
+        varInfo.atrSize = -1;
     }
-    
-    //Verifica si es un archivo regural
+    //Verifica si es un archivo regular
     if(!S_ISREG(varStat.st_mode)){
-        printf("%s no es un archivo\n", prmFileName);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "%s no es un archivo\n", prmFileName);
+        varInfo.atrSize = -1;
     }
-
-    file_info varInfo;
-    char filename[PATH_MAX];
-    strcpy(filename, prmFileName);
 
     memset(&varInfo, 0, sizeof(file_info));
     varInfo.atrSize = varStat.st_size;
-    strcpy(varInfo.atrFileNeme, basename(prmFileName));
+    strcpy(varInfo.atrFileName, prmFileName);
 
     return varInfo;
 }
@@ -31,3 +27,4 @@ void DieWithError(char *errorMessage)
     perror(errorMessage);
     exit(EXIT_FAILURE);
 }
+

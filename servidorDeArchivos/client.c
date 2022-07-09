@@ -1,8 +1,6 @@
 #include "protocol.h"
 #include "split.h"
 
-#include "protocol.h"
-
 int atrFinished;
 
 /**
@@ -11,7 +9,8 @@ int atrFinished;
  */
 void handler_sigterm(int);
 
-int main(int argc, char * argv[]){
+int main(int argc, char *argv[])
+{
 
     // #####################   SIGTERM   #########################
 
@@ -29,7 +28,8 @@ int main(int argc, char * argv[]){
     // ###########################################################
 
     // Lectura de puerto desde consola
-    if (argc != 2) {
+    if (argc != 2)
+    {
         fprintf(stderr, "Debe especificar el puerto del cliente.\n");
         exit(EXIT_FAILURE);
     }
@@ -53,7 +53,7 @@ int main(int argc, char * argv[]){
 
     // Conectar
     connect(varServerSocket, (struct sockaddr *)&varAddress, sizeof(struct sockaddr));
-    
+
     // Recibir mensaje de bienvenida del servidor
     int varNumBytes;
     char varMensaje[BUFSIZ];
@@ -71,15 +71,17 @@ int main(int argc, char * argv[]){
         fgets(varMensaje, BUFSIZ, stdin);
 
         // Dividir input
-        split_list * varSplitList;
+        split_list *varSplitList;
         varSplitList = split(varMensaje, " \n\r\t");
 
-
         // Verificar los parametros
-        if (EQUALS(varSplitList->parts[0], "exit")) {
+        if (EQUALS(varSplitList->parts[0], "exit"))
+        {
             varSplitList->parts[1] = "0";
             atrFinished = 1;
-        } else if (varSplitList->count == 1 || varSplitList->count > 2) {
+        }
+        else if (varSplitList->count == 1 || varSplitList->count > 2)
+        {
             fprintf(stderr, "Debe especificar el comando y el nombre del archivo.\n");
             continue;
         }
@@ -88,7 +90,53 @@ int main(int argc, char * argv[]){
         request varRequest;
         strcpy(varRequest.atrOperation, varSplitList->parts[0]);
         strcpy(varRequest.atrFileName, varSplitList->parts[1]);
-        write(varServerSocket, (char *)&varRequest, sizeof(request));
+
+        if (EQUALS(varRequest.atrOperation, "get"))
+        {
+            write(varServerSocket, (char *)&varRequest, sizeof(request));
+            // TODO: Recibir archivo
+            // 2. Recibir la informacion del archivo del cliente
+            // 3. Crear la ruta "Files/FILENAME"
+            // 3.1 Abrir el archivo en modo escritura
+            // 3.2 Leer una parte del socket
+            // 3.3 Escribir la parte en el archivo
+            // 3.4 Repetir 3.2 mientras falte por leer
+        }
+        else if (EQUALS(varRequest.atrOperation, "put"))
+        {
+            file_info varFileInfo;
+            memset(&varFileInfo, 0, sizeof(file_info));
+
+            // TODO: Enviar arhivo
+            // 1. Verificar si el archivo existe
+            varFileInfo = read_file_atr(varRequest.atrFileName);
+            // 2. Verificar informacion del archivo (atrSize = -1) si el archivo no existe
+            if (varFileInfo.atrSize >= 0)
+            {
+                // 3. Si el archivo existe:
+                write(varServerSocket, (char *)&varRequest, sizeof(request));
+
+                // 3.1 Abrir el archivo en modo lectura
+                char varChar;
+                FILE *varFilePointer;
+                varFilePointer = fopen(varFileInfo.atrFileName, "r");
+                write(varServerSocket, (char *)&varFileInfo, sizeof(file_info));
+                // 3.2 Leer una parte del archivo
+                // 3.3 Escribir la parte al socket
+                // 3.4 Repetir 3.2 miestras falte por leer
+                int varOffset = 0;
+                int sendedBytes;
+                int varRemainData = varFileInfo.atrSize;
+                printf("Se enviaron %d de %d bytes.\n", sendedBytes, varFileInfo.atrSize);
+                while (((sendedBytes = sendfile(varServerSocket, varFilePointer, &varOffset, BUFSIZ)) > 0) && (varRemainData > 0))
+                {
+                    printf("1. Server sent %d bytes from file's data, varOffset is now : %d and remaining data = %d\n", sendedBytes, varOffset, varRemainData);
+                    varRemainData -= sendedBytes;
+                    printf("2. Server sent %d bytes from file's data, varOffset is now : %d and remaining data = %d\n", sendedBytes, varOffset, varRemainData);
+                }
+            }
+            fprintf(stderr, "El archivo no existe.\n");
+        }
     }
 
     printf("\nClosing connection with server...\n");

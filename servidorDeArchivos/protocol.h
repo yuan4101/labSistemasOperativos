@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/sendfile.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -31,7 +32,7 @@ typedef struct
 typedef struct
 {
     int atrSize; /**< Tamano del archivo a tranferir, -1 si no existe >**/
-    char atrFileNeme[PATH_MAX];
+    char atrFileName[PATH_MAX];
 }file_info;
 
 /**

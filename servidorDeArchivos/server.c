@@ -28,8 +28,8 @@ client_t *atrClients[MAX_CLIENTS];
 void *client_request(void *prmArg);
 /**
  * @brief Envia un mensaje al cliente
- * @param prmMessage 
- * @param prmClient 
+ * @param prmMessage
+ * @param prmClient
  */
 void write_message_client(char *prmMessage, client_t *prmClient);
 /**
@@ -69,7 +69,6 @@ int main(int argc, char *argv[])
     memset(&varAct, 0, sizeof(struct sigaction));
     memset(&varOldAct, 0, sizeof(struct sigaction));
 
-
     // Cuando se reciba SIGTERM se ejecutara handler_sigterm
     varAct.sa_handler = handler_sigterm;
 
@@ -78,8 +77,9 @@ int main(int argc, char *argv[])
 
     //###########################################################
 
-    //Lectura de puerto desde consola
-    if (argc != 2) {
+    // Lectura de puerto desde consola
+    if (argc != 2)
+    {
         fprintf(stderr, "Debe especificar el puerto del servidor.\n");
         exit(EXIT_FAILURE);
     }
@@ -95,13 +95,14 @@ int main(int argc, char *argv[])
     // Direccion IPV4
     struct sockaddr_in varServerAddress;
     struct sockaddr_in varClientAddress;
-    
+
     // Arreglo de ID de hilo para los clientes
     pthread_t thread_client;
 
     // 1. Socket IPv4, de tipo flujo (stream)
     varServerSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (varServerSocket == -1) {
+    if (varServerSocket == -1)
+    {
         fprintf(stderr, "No se pudo crear el socket");
         exit(EXIT_FAILURE);
     }
@@ -115,7 +116,7 @@ int main(int argc, char *argv[])
 
     // inet_aton("0.0.0.0", &varAddress.sin_addr);
     varServerAddress.sin_addr.s_addr = INADDR_ANY; // 0.0.0.0
-    
+
     if (setsockopt(varServerSocket, SOL_SOCKET, (SO_REUSEPORT | SO_REUSEADDR), (char *)&varOption, sizeof(varOption)) < 0)
     {
         DieWithError("ERROR -1: setsockopt falló");
@@ -128,7 +129,8 @@ int main(int argc, char *argv[])
     }
 
     // 3. Socket disponible
-    if (listen(varServerSocket, 10) == -1) {
+    if (listen(varServerSocket, 10) == -1)
+    {
         DieWithError("Error -1: Socket no disponible");
     }
 
@@ -189,20 +191,23 @@ void *client_request(void *prmArg)
         int varNumBytes;
         request varRequest;
         memset(&varRequest, 0, sizeof(request));
-        
+
         varNumBytes = read(varClient->atrSocket, (char *)&varRequest, sizeof(request));
-        if (varNumBytes == 0) {
+        if (varNumBytes == 0)
+        {
             fprintf(stderr, "Client disconnected unexpectedly or EOF (read)\n");
             break;
         }
-        else if (varNumBytes == -1) {
+        else if (varNumBytes == -1)
+        {
             fprintf(stderr, "Error (read)\n");
             break;
         }
 
         printf("Operation: %s\nFilename: %s\n", varRequest.atrOperation, varRequest.atrFileName);
 
-        if (EQUALS(varRequest.atrOperation, "get")) {
+        if (EQUALS(varRequest.atrOperation, "get"))
+        {
             printf("OPERATION GET...\n");
             // TODO: Enviar arhivo
             // 1. Verificar si el archivo existe
@@ -214,15 +219,32 @@ void *client_request(void *prmArg)
             // 3.3 Escribir la parte al socket
             // 3.4 Repetir 3.2 miestras falte por leer
         }
-        else if (EQUALS(varRequest.atrOperation, "put")) {
+        else if (EQUALS(varRequest.atrOperation, "put"))
+        {
             printf("OPERATION PUT...\n");
             // TODO: Recibir archivo
             // 2. Recibir la informacion del archivo del cliente
+            file_info varFileInfo;
+            memset(&varFileInfo, 0, sizeof(file_info));
+            read(varClient->atrSocket, (char *)&varFileInfo, sizeof(file_info));
+            
             // 3. Crear la ruta "Files/FILENAME"
             // 3.1 Abrir el archivo en modo escritura
+            ssize_t varLen;
+            char varBuffer[BUFSIZ];
+            FILE *varDestinyFilePointer = fopen(strcat("files/", varFileInfo.atrFileName), "w+");
+            int varRemainData = varFileInfo.atrSize;
+
             // 3.2 Leer una parte del socket
             // 3.3 Escribir la parte en el archivo
             // 3.4 Repetir 3.2 mientras falte por leer
+            while ((varRemainData > 0) && ((varLen = recv(varClient->atrSocket, varBuffer, BUFSIZ, 0)) > 0))
+            {
+                fwrite(varBuffer, sizeof(char), varLen, varDestinyFilePointer);
+                varRemainData -= varLen;
+                printf("Recibe %d bytes y se espera :- %d bytes\n", varLen, varRemainData);
+            }
+            fclose(varDestinyFilePointer);
         }
         else if (EQUALS(varRequest.atrOperation, "exit"))
         {
@@ -233,21 +255,21 @@ void *client_request(void *prmArg)
             printf("La operacion recibida no existe...\n");
         }
     }
-    
+
     // Cerrar la conexion con el cliente (el hilo en cuestion cierra la conexion)
     atrClientsCount--;
     memset(&varBufferOut, 0, BUFSIZ);
     sprintf(varBufferOut, "Closing connection with client %s, Clients connected: %d\n", inet_ntoa(varClient->atrAddress.sin_addr), atrClientsCount);
     printf("%s", varBufferOut);
     write_message_client(varBufferOut, varClient);
-    
+
     // Elimina el cliente del socket
     close(varClient->atrSocket);
-    
+
     // Elimina el cliente de la cola
     remove_client_queue(varClient->atrUID);
     free(varClient);
-    
+
     // Libera el hilo de la ejecucion
     pthread_detach(pthread_self());
 
