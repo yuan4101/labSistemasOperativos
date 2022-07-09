@@ -106,6 +106,13 @@ int main(int argc, char *argv[])
         {
             file_info varFileInfo;
             memset(&varFileInfo, 0, sizeof(file_info));
+            int fd;
+            struct stat file_stat;
+            int len;
+            int offset = 0;
+            int sent_bytes = 0;
+            int remain_data;
+            char file_size[256];
 
             // TODO: Enviar arhivo
             // 1. Verificar si el archivo existe
@@ -113,27 +120,21 @@ int main(int argc, char *argv[])
             // 2. Verificar informacion del archivo (atrSize = -1) si el archivo no existe
             if (varFileInfo.atrSize >= 0)
             {
-                // 3. Si el archivo existe:
                 write(varServerSocket, (char *)&varRequest, sizeof(request));
-
-                // 3.1 Abrir el archivo en modo lectura
-                char varChar;
-                FILE *varFilePointer;
-                varFilePointer = fopen(varFileInfo.atrFileName, "r");
-                write(varServerSocket, (char *)&varFileInfo, sizeof(file_info));
-                // 3.2 Leer una parte del archivo
-                // 3.3 Escribir la parte al socket
-                // 3.4 Repetir 3.2 miestras falte por leer
-                int varOffset = 0;
-                int sendedBytes;
-                int varRemainData = varFileInfo.atrSize;
-                printf("Se enviaron %d de %d bytes.\n", sendedBytes, varFileInfo.atrSize);
-                while (((sendedBytes = sendfile(varServerSocket, varFilePointer, &varOffset, BUFSIZ)) > 0) && (varRemainData > 0))
-                {
-                    printf("1. Server sent %d bytes from file's data, varOffset is now : %d and remaining data = %d\n", sendedBytes, varOffset, varRemainData);
-                    varRemainData -= sendedBytes;
-                    printf("2. Server sent %d bytes from file's data, varOffset is now : %d and remaining data = %d\n", sendedBytes, varOffset, varRemainData);
-                }
+                fd = open(varFileInfo.atrFileName, O_RDONLY);
+                fstat(fd, &file_stat);
+                printf("File Size: \n%d bytes\n", file_stat.st_size);
+                sprintf(file_size, "%d", file_stat.st_size);
+                len = send(varServerSocket, file_size, sizeof(file_size), 0);
+            }
+            offset = 0;
+            remain_data = file_stat.st_size;
+            /* Sending file data */
+            while (((sent_bytes = sendfile(varServerSocket, fd, &offset, BUFSIZ)) > 0) && (remain_data > 0))
+            {
+                fprintf(stdout, "1. Server sent %d bytes from file's data, offset is now : %d and remaining data = %d\n", sent_bytes, offset, remain_data);
+                remain_data -= sent_bytes;
+                fprintf(stdout, "2. Server sent %d bytes from file's data, offset is now : %d and remaining data = %d\n", sent_bytes, offset, remain_data);
             }
             fprintf(stderr, "El archivo no existe.\n");
         }
