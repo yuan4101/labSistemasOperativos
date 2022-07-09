@@ -209,40 +209,65 @@ void *client_request(void *prmArg)
         if (EQUALS(varRequest.atrOperation, "get"))
         {
             printf("OPERATION GET...\n");
-            // TODO: Enviar arhivo
-            // 1. Verificar si el archivo existe
-            // 2. Enviar informacion del archivo al cliente (size = -1) si
-            // el archivo no existe
-            // 3. Si el arvhico existe:
-            // 3.1 Abrir el archivo en modo lectura
-            // 3.2 Leer una parte del archivo
-            // 3.3 Escribir la parte al socket
-            // 3.4 Repetir 3.2 miestras falte por leer
+
+            file_info varFileInfo;
+            memset(&varFileInfo, 0, sizeof(file_info));
+
+            int varfileDescriptor;
+            int remainData;
+            int sentBytes = 0;
+
+            char varPath[100];
+            strcat(strcpy(varPath, "files/"), varRequest.atrFileName);
+            varFileInfo = read_file_atr(varPath);
+
+            if (varFileInfo.atrSize >= 0)
+            {
+                strcpy(varFileInfo.atrFileName, varRequest.atrFileName);
+                write(varClient->atrSocket, (char *)&varFileInfo, sizeof(file_info));
+                varfileDescriptor = open(varFileInfo.atrFileName, O_RDONLY);
+                printf("File Size: %d bytes\n", varFileInfo.atrSize);
+
+                remainData = varFileInfo.atrSize;
+                
+                while (((sentBytes = sendfile(varClient->atrSocket, varfileDescriptor, NULL, BUFSIZ)) > 0) && (remainData > 0))
+                {
+                    printf("1. Server sent %d bytes from file's data, and remaining data = %d\n", sentBytes, remainData);
+                    remainData -= sentBytes;
+                    printf("2. Server sent %d bytes from file's data, and remaining data = %d\n", sentBytes, remainData);
+                }
+            }
+            else{
+                fprintf(stderr, "El archivo no existe.\n");
+            }
         }
         else if (EQUALS(varRequest.atrOperation, "put"))
         {
             printf("OPERATION PUT...\n");
-            // TODO: Recibir archivo
-            // 2. Recibir la informacion del archivo del cliente
+
             file_info varFileInfo;
             memset(&varFileInfo, 0, sizeof(file_info));
             read(varClient->atrSocket, (char *)&varFileInfo, sizeof(file_info));
+
+            printf("Nombre %s, size %d\n", varFileInfo.atrFileName, varFileInfo.atrSize);
+
+            char varPath[100];
+            strcat(strcpy(varPath, "files/"), varFileInfo.atrFileName);
+            mkdir("files/", 0755);
+
+            FILE * varDestinyFilePointer;
+            varDestinyFilePointer = fopen(varPath, "w+");
+
+            int varRemainData = varFileInfo.atrSize;
             
-            // 3. Crear la ruta "Files/FILENAME"
-            // 3.1 Abrir el archivo en modo escritura
             ssize_t varLen;
             char varBuffer[BUFSIZ];
-            FILE *varDestinyFilePointer = fopen(strcat("files/", varFileInfo.atrFileName), "w+");
-            int varRemainData = varFileInfo.atrSize;
 
-            // 3.2 Leer una parte del socket
-            // 3.3 Escribir la parte en el archivo
-            // 3.4 Repetir 3.2 mientras falte por leer
-            while ((varRemainData > 0) && ((varLen = recv(varClient->atrSocket, varBuffer, BUFSIZ, 0)) > 0))
+            while ((varRemainData > 0) && ((varLen = read(varClient->atrSocket, varBuffer, BUFSIZ)) > 0))
             {
                 fwrite(varBuffer, sizeof(char), varLen, varDestinyFilePointer);
                 varRemainData -= varLen;
-                printf("Recibe %d bytes y se espera :- %d bytes\n", varLen, varRemainData);
+                printf("Recibe %d bytes y en espera :- %d bytes\n", varLen, varRemainData);
             }
             fclose(varDestinyFilePointer);
         }

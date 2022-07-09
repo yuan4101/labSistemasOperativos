@@ -94,49 +94,59 @@ int main(int argc, char *argv[])
         if (EQUALS(varRequest.atrOperation, "get"))
         {
             write(varServerSocket, (char *)&varRequest, sizeof(request));
-            // TODO: Recibir archivo
-            // 2. Recibir la informacion del archivo del cliente
-            // 3. Crear la ruta "Files/FILENAME"
-            // 3.1 Abrir el archivo en modo escritura
-            // 3.2 Leer una parte del socket
-            // 3.3 Escribir la parte en el archivo
-            // 3.4 Repetir 3.2 mientras falte por leer
+
+            file_info varFileInfo;
+            memset(&varFileInfo, 0, sizeof(file_info));
+            read(varServerSocket, (char *)&varFileInfo, sizeof(file_info));
+
+            printf("Nombre %s, size %d\n", varFileInfo.atrFileName, varFileInfo.atrSize);
+
+            FILE * varDestinyFilePointer;
+            varDestinyFilePointer = fopen(varFileInfo.atrFileName, "w+");
+
+            int varRemainData = varFileInfo.atrSize;
+            
+            ssize_t varLen;
+            char varBuffer[BUFSIZ];
+
+            while ((varRemainData > 0) && ((varLen = read(varServerSocket, varBuffer, BUFSIZ)) > 0))
+            {
+                fwrite(varBuffer, sizeof(char), varLen, varDestinyFilePointer);
+                varRemainData -= varLen;
+                printf("Recibe %d bytes y en espera :- %d bytes\n", varLen, varRemainData);
+            }
+            fclose(varDestinyFilePointer);
         }
         else if (EQUALS(varRequest.atrOperation, "put"))
         {
             file_info varFileInfo;
             memset(&varFileInfo, 0, sizeof(file_info));
-            int fd;
-            struct stat file_stat;
-            int len;
-            int offset = 0;
-            int sent_bytes = 0;
-            int remain_data;
-            char file_size[256];
 
-            // TODO: Enviar arhivo
-            // 1. Verificar si el archivo existe
+            int varfileDescriptor;
+            int remainData;
+            int sentBytes = 0;
+
             varFileInfo = read_file_atr(varRequest.atrFileName);
-            // 2. Verificar informacion del archivo (atrSize = -1) si el archivo no existe
+
             if (varFileInfo.atrSize >= 0)
             {
                 write(varServerSocket, (char *)&varRequest, sizeof(request));
-                fd = open(varFileInfo.atrFileName, O_RDONLY);
-                fstat(fd, &file_stat);
-                printf("File Size: \n%d bytes\n", file_stat.st_size);
-                sprintf(file_size, "%d", file_stat.st_size);
-                len = send(varServerSocket, file_size, sizeof(file_size), 0);
+                write(varServerSocket, (char *)&varFileInfo, sizeof(file_info));
+                varfileDescriptor = open(varFileInfo.atrFileName, O_RDONLY);
+                printf("File Size: %d bytes\n", varFileInfo.atrSize);
+
+                remainData = varFileInfo.atrSize;
+
+                while (((sentBytes = sendfile(varServerSocket, varfileDescriptor, NULL, BUFSIZ)) > 0) && (remainData > 0))
+                {
+                    printf("1. Server sent %d bytes from file's data, and remaining data = %d\n", sentBytes, remainData);
+                    remainData -= sentBytes;
+                    printf("2. Server sent %d bytes from file's data, and remaining data = %d\n", sentBytes, remainData);
+                }
             }
-            offset = 0;
-            remain_data = file_stat.st_size;
-            /* Sending file data */
-            while (((sent_bytes = sendfile(varServerSocket, fd, &offset, BUFSIZ)) > 0) && (remain_data > 0))
-            {
-                fprintf(stdout, "1. Server sent %d bytes from file's data, offset is now : %d and remaining data = %d\n", sent_bytes, offset, remain_data);
-                remain_data -= sent_bytes;
-                fprintf(stdout, "2. Server sent %d bytes from file's data, offset is now : %d and remaining data = %d\n", sent_bytes, offset, remain_data);
+            else{
+                fprintf(stderr, "El archivo no existe.\n");
             }
-            fprintf(stderr, "El archivo no existe.\n");
         }
     }
 
