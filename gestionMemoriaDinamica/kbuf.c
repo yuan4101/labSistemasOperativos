@@ -54,7 +54,7 @@ kbuf * kbuf_create(unsigned int prmElemSize){
     }
 
     //3. Reservar la memoria necesaria (malloc)
-    kbuf * varRetorno = malloc();
+    kbuf * varRetorno = malloc(4096);
 
 
 
