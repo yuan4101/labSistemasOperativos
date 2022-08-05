@@ -4,11 +4,12 @@
 
 int main(int argc, char * argv[]){
     kbuf * varBuf;
-    int varElemSize = 64;
+    int varElemSize = 6;
 
-    //varBuf = kbuf_create(varElemSize);
+    varBuf = kbuf_create(varElemSize);
 
     printf("Item size: %d\n", varElemSize);
+    printf("ElemSize: %d\n", varBuf->elemsize);
     printf("Elements in one page: %d\n", varBuf->total);
     printf("Allocated page: 0x%x\n", (unsigned int)varBuf);
     printf("Allocated: 0x%x\n", (unsigned int)kbuf_allocate(varBuf));
