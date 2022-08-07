@@ -35,8 +35,9 @@ kbuf * kbuf_create(unsigned int prmElemSize){
     //cantidad antes de calcular la cantidad de items.
     int varRealElemSize = varTempSize;
     int varLeftPagSize = (4096 - sizeof(kbuf));
+    printf("Page remaining space: %d\n", varLeftPagSize);
 
-    varTempTotal = varLeftPagSize / varRealElemSize;
+    varTempTotal = varLeftPagSize / varTempElemsize;
     varTempFree = varTempTotal;
     varTempPages = 1;
 
@@ -56,9 +57,13 @@ kbuf * kbuf_create(unsigned int prmElemSize){
     //3. Reservar la memoria necesaria (malloc)
     kbuf * varRetorno = malloc(4096);
 
-
-
     //      INICIALIZAR EL BUFFER
+    varRetorno->elemsize = varTempElemsize;
+    varRetorno->free = varTempFree;
+    varRetorno->pages = varTempPages;
+    varRetorno->size = varTempSize;
+    varRetorno->total = varTempTotal;
+
     //Apuntar al inicio de la memoria reservada
     //varRetorno = (kbuf*)varDireccion;
     //En esta direccion se guarda el buffer
