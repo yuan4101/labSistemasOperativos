@@ -39,8 +39,9 @@ kbuf *kbuf_create(unsigned int prmElemSize)
     // cantidad antes de calcular la cantidad de items.
     int varRealElemSize = varTempSize;
     int varLeftPagSize = (4096 - sizeof(kbuf));
+    printf("Page remaining space: %d\n", varLeftPagSize);
 
-    varTempTotal = varLeftPagSize / varRealElemSize;
+    varTempTotal = varLeftPagSize / varTempElemsize;
     varTempFree = varTempTotal;
     varTempPages = 1;
 

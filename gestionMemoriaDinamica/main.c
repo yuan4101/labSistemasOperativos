@@ -11,7 +11,9 @@ int main(int argc, char *argv[])
 
     printf("Item size: %d\n", varElemSize);
     printf("ElemSize: %d\n", varBuf->elemsize);
+    printf("Size: %d\n", varBuf->size);
     printf("Elements in one page: %d\n", varBuf->total);
+    printf("Used pages: %d\n", varBuf->pages);
     printf("Allocated page: 0x%x\n", (unsigned int)varBuf);
     printf("First item at: 0x%x\n", (unsigned int)varBuf->data);
     printf("Allocated: 0x%x\n", (unsigned int)kbuf_allocate(varBuf));
