@@ -1,8 +1,8 @@
 #include "kbuf.h"
 
-// Temp
 #include <stdio.h>
 #include <stdlib.h>
+
 
 kbuf *kbuf_create(unsigned int prmElemSize)
 {
@@ -80,18 +80,16 @@ kbuf *kbuf_create(unsigned int prmElemSize)
     unsigned int varStartAddres = varAddres + (varTamnItemBuff * varTempSize);
     varRetorno->data = (char *)varStartAddres;
 
-    // varItem = (kitem *)(varDireccion + offset);
+    //varItem = (kitem *)(varDireccion + offset);
     varItem = (kitem *)(varStartAddres);
     varRetorno->free_list = varItem;
     unsigned int varTempAddres = varStartAddres + varTempSize;
 
-    for (int i = 0; i < varTempTotal; i++)
-    {
-
-    }
-    
     // Repetir cada item (hasta el penultimo) apunta a la direccion del siguiente item
     // El ultimo item tiene como siguiente NULL
+
+    //varRetorno->free_list->next = (kitem *)(varTempAddres);
+
 
     return varRetorno;
 }

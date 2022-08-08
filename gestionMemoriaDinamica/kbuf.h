@@ -25,6 +25,14 @@ struct kitem * next;
 //Esta estructura ocupa mínimo 4 bytes (el tamaño de un apuntador)
 }kitem;
 
+/**
+ * @brief Crea un nodo en la direccion especificada
+ * 
+ * @param prmDireccion  Direcciond memoria a especificar
+ * @return kitem* 
+ */
+kitem *crearNodo(unsigned int prmDireccion);
+
 /** @brief Crea un buffer de elementos
 *
 * @param size Tamaño de un elemento del buffer
